@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,35 +8,50 @@ import { Observable } from 'rxjs';
 export class AuthService {
 
   private apiUrl = 'GRAPHQL_API_URL';
+  private headers = new HttpHeaders()
+    .set('Content-Type', 'application/graphql')
+    .set('X-Appwrite-Project', '64c588b8b4f092464391');
 
   constructor(private http: HttpClient) { }
 
   register(email: String, password: String): Observable<any> {
     const query = `
       mutation {
-        register(email: "${email}", password: "${password}") {
-          user {
-            id
-            username
-          }
+        accountCreate(userId: "unique()", email: "${email}", password: ${password}) {
+          _id
+          email
+          name
         }
       }      
     `;
 
-    return this.http.post(this.apiUrl, { query});
+    return this.http.post(this.apiUrl, { query }, { headers: this.headers });
   }
 
   login(email: String, password: String): Observable<any> {
     const query = `
       mutation {
-        login(email:"${email}", password: "${password}") {
-          user {
-            id
-            username
-          }
+        accountCreateEmailSession(email:"${email}", password: "${password}") {
+          _id
+          userId
+          provider
+          expire
         }
     `;
 
-    return this.http.post(this.apiUrl, { query });
+    return this.http.post(this.apiUrl, { query }, { headers: this.headers });
+  }
+
+  getCurrentUser() {
+    const query = `
+      query {
+        accountGet {
+          _id
+          email
+        }
+      }
+    `;
+
+    return this.http.post(this.apiUrl, { query }, { headers: this.headers});
   }
 }
