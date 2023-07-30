@@ -48,6 +48,8 @@ export class AuthService {
         accountGet {
           _id
           email
+          name
+          status
         }
       }
     `;
