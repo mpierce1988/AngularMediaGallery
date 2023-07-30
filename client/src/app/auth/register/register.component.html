@@ -1,1 +1,49 @@
-<p>register works!</p>
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <!-- Title -->
+            <h2 class="text-center">Register</h2>
+
+            <!-- Success Message -->
+            <div *ngIf="successMessage" class="alert alert-success">
+                {{ successMessage }}
+            </div>
+
+            <!-- Error Messages -->
+            <div *ngIf="errors && errors.length > 0" class="alert alert-danger">
+                <ul>
+                    <li *ngFor="let error of errors">{{ error }}</li>
+                </ul>
+            </div>
+
+            <!-- Registration Form -->
+            <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+                <!-- Email Field -->
+                <div class="mb-3">
+                    <label for="email" class="form-label">Email address</label>
+                    <input type="email" class="form-control" id="email" formControlName="email" [class.is-invalid]="form.value.email.invalid && form.value.email.touched">
+                    <div *ngIf="form.value.email.invalid && form.value.email.touched" class="invalid-feedback">
+                        Email is required.
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" formControlName="password" [class.is-invalid]="form.value.password.invalid && form.value.password.touched">
+                    <div *ngIf="form.value.password.invalid && form.value.password.touched" class="invalid-feedback">
+                        Password is required.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary" [disabled]="loading">
+                    <!-- Show spinner when loading -->
+                    <span *ngIf="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    Register
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
