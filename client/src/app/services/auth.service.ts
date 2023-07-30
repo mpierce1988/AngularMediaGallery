@@ -1,20 +1,32 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
+import { User } from '../models/user.model';
 
+// This service provides methods related to authentication
 @Injectable({
   providedIn: 'root'
 })
-export class AuthService {
-
+export class AuthService {  
+  // URL endpoint for the GraphQL API
   private apiUrl = 'GRAPHQL_API_URL';
+
+  // Default headers for HTTP requests
   private headers = new HttpHeaders()
     .set('Content-Type', 'application/graphql')
     .set('X-Appwrite-Project', '64c588b8b4f092464391');
 
+  // Inject HttpClient into the service
   constructor(private http: HttpClient) { }
 
+  /**
+   * Registers a new user
+   * @param email New user's email address
+   * @param password New user's password
+   * @returns Observable of the HTTP response
+   */
   register(email: String, password: String): Observable<any> {
+    // GraphQL mutation for creating a new account
     const query = `
       mutation {
         accountCreate(userId: "unique()", email: "${email}", password: ${password}) {
@@ -25,9 +37,16 @@ export class AuthService {
       }      
     `;
 
+    // Execute the HTTP Post request
     return this.http.post(this.apiUrl, { query }, { headers: this.headers });
   }
 
+   /**
+    * Login an existing user
+    * @param email User's email address
+    * @param password User's password
+    * @returns Observable of the HTTP response
+    */
   login(email: String, password: String): Observable<any> {
     const query = `
       mutation {
@@ -42,7 +61,11 @@ export class AuthService {
     return this.http.post(this.apiUrl, { query }, { headers: this.headers });
   }
 
-  getCurrentUser() {
+  /**
+   * Get's the current user's data
+   * @returns Observable of the current User object
+   */
+  getCurrentUser():Observable<User> {
     const query = `
       query {
         accountGet {
@@ -54,6 +77,37 @@ export class AuthService {
       }
     `;
 
-    return this.http.post(this.apiUrl, { query }, { headers: this.headers});
+    const result = this.http.post(this.apiUrl, { query }, { headers: this.headers})
+      .pipe(
+        // transform the response into a User object
+        map((res: any) => {
+          if(res && res.data && res.data.accountGet){
+            return new User(res.data.accountGet._id, res.data.accountGet.name, res.data.accountGet.email, []);
+          } else if (res && res.data && res.data.errors) {
+            return new User('', '', '', res.data.errors);
+          } else {
+            return new User('', '', '', ["Could not fetch the current user"]);
+          }
+          
+        }),
+        // Handle errors in the request
+        catchError((err) => {
+          console.error('Error fetching the current user: ', err);
+          return of(new User('', '', '', ["Could not fetch the current user"]));
+        })
+      );
+      
+      return result;
   }
+
+  /**
+   * Check if the user is logged in
+   * @returns Observable of a boolean representing if the User is logged in
+   */
+  isLoggedIn(): Observable<boolean> {
+    return this.getCurrentUser().pipe(
+      map((user: User) => user.errors.length === 0)
+    );
+  } 
+  
 }
