@@ -9,7 +9,7 @@ import { User } from '../models/user.model';
 })
 export class AuthService {  
   // URL endpoint for the GraphQL API
-  private apiUrl = 'GRAPHQL_API_URL';
+  private apiUrl = 'http://localhost:8080/v1/graphql';
 
   // Default headers for HTTP requests
   private headers = new HttpHeaders()
@@ -105,9 +105,25 @@ export class AuthService {
    * @returns Observable of a boolean representing if the User is logged in
    */
   isLoggedIn(): Observable<boolean> {
-    return this.getCurrentUser().pipe(
-      map((user: User) => user.errors.length === 0)
-    );
-  } 
+    // Create graphql query to getSession
+    const query = `
+      query {
+        getSession(sessionId: "current") {
+          expire
+        }
+      } `;
+
+      return this.http.post(this.apiUrl, { query }, { headers: this.headers })
+        .pipe(
+          map((res: any) => {
+            if(!res || !res.data || !res.data.expire) {
+              return false;
+            }
+
+            // check if expire date in ISO 8601 format is in the future
+            return new Date(res.data.expire) > new Date();
+          })
+        );
+  }
   
 }
