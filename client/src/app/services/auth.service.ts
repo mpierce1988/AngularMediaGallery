@@ -13,7 +13,7 @@ export class AuthService {
 
   // Default headers for HTTP requests
   private headers = new HttpHeaders()
-    .set('Content-Type', 'application/graphql')
+    .set('Content-Type', 'application/json')
     .set('X-Appwrite-Project', '64c588b8b4f092464391');
 
   // Inject HttpClient into the service
@@ -107,21 +107,22 @@ export class AuthService {
   isLoggedIn(): Observable<boolean> {
     // Create graphql query to getSession
     const query = `
-      query {
-        getSession(sessionId: "current") {
-          expire
+      query GetUser {
+        accountGet {
+          _id
+          email
         }
       } `;
 
-      return this.http.post(this.apiUrl, { query }, { headers: this.headers })
+      return this.http.post(this.apiUrl, { query: query }, { headers: this.headers, withCredentials: true })
         .pipe(
           map((res: any) => {
-            if(!res || !res.data || !res.data.expire) {
+            if(!res || !res.data || !res.data.email) {
               return false;
             }
 
-            // check if expire date in ISO 8601 format is in the future
-            return new Date(res.data.expire) > new Date();
+            // User was returned, so they are logged in
+            return true;
           })
         );
   }
