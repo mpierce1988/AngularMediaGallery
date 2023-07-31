@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -20,13 +21,14 @@ export class LoginComponent {
     password: new FormControl('', Validators.required)
   });
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   reset() {
+    this.form.reset();
     this.errors = [];
     this.successMessage = '';
-    this.form.value.email = '';
-    this.form.value.password = '';
+    //this.form.value.email = '';
+    //this.form.value.password = '';
   }
 
   onSubmit() {
@@ -58,6 +60,8 @@ export class LoginComponent {
               this.errors = [];
               // Set loading state
               this.loading = false;
+              // Navigate to home page at '/'
+              this.router.navigate(['/']);
             }
           },
           error: (error) => {
@@ -68,6 +72,7 @@ export class LoginComponent {
             this.errors = error.error.errors;
             // Set loading state
             this.loading = false;
+            
           }
         });
     }
