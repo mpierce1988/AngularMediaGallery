@@ -14,8 +14,8 @@ export class RegisterComponent {
   loading: boolean = false;
 
   form: FormGroup = new FormGroup({
-    email: new FormControl('', Validators.required),
-    password: new FormControl('', [Validators.required, Validators.email])
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', Validators.required)
   });
 
   constructor(private authService: AuthService) {}

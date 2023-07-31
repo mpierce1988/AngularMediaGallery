@@ -22,8 +22,8 @@
                 <!-- Email Field -->
                 <div class="mb-3">
                     <label for="email" class="form-label">Email address</label>
-                    <input type="email" class="form-control" id="email" formControlName="email" [class.is-invalid]="form.value.email.invalid && form.value.email.touched">
-                    <div *ngIf="form.value.email.invalid && form.value.email.touched" class="invalid-feedback">
+                    <input type="email" class="form-control" id="email" formControlName="email" [class.is-invalid]="form.get('email')!.invalid && form.get('email')!.touched">
+                    <div *ngIf="form.get('email')!.invalid && form.get('email')!.touched" class="invalid-feedback">
                         Email is required.
                     </div>
                 </div>
@@ -31,14 +31,14 @@
                 <!-- Password Field -->
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" formControlName="password" [class.is-invalid]="form.value.password.invalid && form.value.password.touched">
-                    <div *ngIf="form.value.password.invalid && form.value.password.touched" class="invalid-feedback">
+                    <input type="password" class="form-control" id="password" formControlName="password" [class.is-invalid]="form.get('password')!.invalid && form.get('password')!.touched">
+                    <div *ngIf="form.get('password')!.invalid && form.get('password')!.touched" class="invalid-feedback">
                         Password is required.
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="btn btn-primary" [disabled]="loading">
+                <button type="submit" class="btn btn-primary" [disabled]="loading || form.invalid">
                     <!-- Show spinner when loading -->
                     <span *ngIf="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                     Register
