@@ -53,7 +53,7 @@ export class LoginComponent {
             } else {
               // No errors occurred
               // Set Success message
-              this.successMessage = 'Login successful! UserId is ' + response.data?.accountCreateEmailSession?._id;
+              this.successMessage = 'Login successful! UserId is ' + response.data?.accountCreateEmailSession?.$id;
               // Clear error message
               this.errors = [];
               // Set loading state

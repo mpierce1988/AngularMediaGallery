@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 import { User } from '../models/user.model';
-import { LoginResponse } from '../models/graphqlresponse.model';
+import { LoginResponse, RegisterResponse } from '../models/graphqlresponse.model';
+import { Client, Account, ID } from 'appwrite';
 
 // This service provides methods related to authentication
 @Injectable({
@@ -26,20 +27,28 @@ export class AuthService {
    * @param password New user's password
    * @returns Observable of the HTTP response
    */
-  register(email: String, password: String): Observable<any> {
+  register(email: String, password: String): Observable<RegisterResponse> {
     // GraphQL mutation for creating a new account
-    const query = `
-      mutation {
-        accountCreate(userId: "unique()", email: "${email}", password: ${password}) {
-          _id
-          email
-          name
-        }
-      }      
-    `;
+    // const query = `
+    //   mutation {
+    //     accountCreate(userId: "unique()", email: "${email}", password: ${password}) {
+    //       _id
+    //       email
+    //       name
+    //     }
+    //   }      
+    // `;
+
+    const query = {
+      "query": "mutation CreateAccount($email: String!, $password: String!){ accountCreate(userId: \"unique()\", email: $email, password: $password) { _id email name } }",
+      "variables": {
+        "email": email,
+        "password": password
+      }
+    }
 
     // Execute the HTTP Post request
-    return this.http.post(this.apiUrl, { query }, { headers: this.headers });
+    return this.http.post<RegisterResponse>(this.apiUrl, query, { headers: this.headers });
   }
 
    /**
@@ -48,7 +57,7 @@ export class AuthService {
     * @param password User's password
     * @returns Observable of the HTTP response
     */
-  login(email: String, password: String): Observable<LoginResponse> {
+  login(email: string, password: string): Observable<LoginResponse> {
     // const query = `
       // mutation {
       //   accountCreateEmailSession(email:"${email}", password: "${password}") {
@@ -58,15 +67,44 @@ export class AuthService {
       //     expire
       //   }
     // `;
-    const query = {
-      "query": "mutation CreateSession($email: String!, $password: String!){ accountCreateEmailSession(email: $email, password: $password) { _id userId provider expire } }",
-      "variables": {
-        "email": email,
-        "password": password
-      }
-    }
 
-    return this.http.post<LoginResponse>(this.apiUrl, query, { headers: this.headers });
+
+    // const query = {
+    //   "query": "mutation CreateSession($email: String!, $password: String!){ accountCreateEmailSession(email: $email, password: $password) { _id userId provider expire } }",
+    //   "variables": {
+    //     "email": email,
+    //     "password": password
+    //   }
+    // }
+
+    // return this.http.post<LoginResponse>(this.apiUrl, query, { headers: this.headers });
+
+    const client = new Client();
+    const account = new Account(client);
+    client.setEndpoint('http://localhost:8080/v1').setProject('64c588b8b4f092464391');
+
+    //const promise =  account.createEmailSession(email, password);
+
+    return new Observable<LoginResponse>((observer) => {
+      account.createEmailSession(email, password).then((response) => {
+        observer.next({
+          data: {
+            accountCreateEmailSession: response
+          }
+        });
+      }).catch((error) => {
+        observer.next({          
+          errors: [{
+            message: error.message,
+            extensions: {
+              category: 'internal'
+            },
+            locations: [],
+            path: []
+          }]
+        });
+      });
+    });
   }
 
   /**
@@ -114,25 +152,43 @@ export class AuthService {
    */
   isLoggedIn(): Observable<boolean> {
     // Create graphql query to getSession
-    const query = `
-      query GetUser {
-        accountGet {
-          _id
-          email
-        }
-      } `;
+    // const query = `
+    //   query GetUser {
+    //     accountGet {
+    //       _id
+    //       email
+    //     }
+    //   } `;
 
-      return this.http.post(this.apiUrl, { query: query }, { headers: this.headers, withCredentials: true })
-        .pipe(
-          map((res: any) => {
-            if(!res || !res.data || !res.data.email) {
-              return false;
-            }
+    // const query = {
+    //   "query": "query GetUser { accountGet { _id email } }"
+    // }
 
-            // User was returned, so they are logged in
-            return true;
-          })
-        );
+    // return this.http.post(this.apiUrl, query, { headers: this.headers, withCredentials: true })
+    //   .pipe(
+    //     map((res: any) => {
+    //       if(!res || !res.data || !res.data.email) {
+    //         return false;
+    //       }
+
+    //       // User was returned, so they are logged in
+    //       return true;
+    //     })
+    //   );
+
+    const client = new Client();
+    const account = new Account(client);
+
+    client.setEndpoint('http://localhost:8080/v1').setProject('64c588b8b4f092464391');
+
+    return new Observable<boolean>((observer) => {
+      account.get().then((response) => {
+        console.log(response);
+        observer.next(true);        
+      }).catch((error) => {
+        observer.next(false);
+      });
+    });
   }
   
 }

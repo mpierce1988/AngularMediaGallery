@@ -23,10 +23,17 @@ export interface ErrorLocation {
 
 // Mutation specific interfaces
 export interface AccountCreateEmailSession {
-    _id: string;
+    $id: string;
     userId: string;
     provider: string;
     expire: string;
 }
 
+export interface AccountCreate {
+    _id: string;
+    email: string;
+    name: string;
+}
+
 export type LoginResponse = GraphQLResponse<{accountCreateEmailSession: AccountCreateEmailSession | null}>;
+export type RegisterResponse = GraphQLResponse<{accountCreate: AccountCreate | null}>;
