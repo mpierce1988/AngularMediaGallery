@@ -39,14 +39,31 @@ export class LoginComponent {
       this.authService.login(this.form.value.email, this.form.value.password)
         .subscribe({
           next: (response) => {
-            console.log(response);
-            // Set sucess message
-            this.successMessage = 'Login successful!';
-            // set loading state
-            this.loading = false;
+            if(response.errors != null && response.errors!.length > 0) {
+              // An error or errors has occurred
+              // Clear any existing errors
+              this.errors = [];
+              // loop through errors and add to errors array
+              for(let i = 0; i < response.errors!.length; i++) {
+                this.errors.push(response.errors![i].message);
+              }
+
+              // Set loading state
+              this.loading = false;
+            } else {
+              // No errors occurred
+              // Set Success message
+              this.successMessage = 'Login successful! UserId is ' + response.data?.accountCreateEmailSession?._id;
+              // Clear error message
+              this.errors = [];
+              // Set loading state
+              this.loading = false;
+            }
           },
           error: (error) => {
             console.log(error);
+            // Clear any existing errors
+            this.errors = [];
             // Set Error Message
             this.errors = error.error.errors;
             // Set loading state

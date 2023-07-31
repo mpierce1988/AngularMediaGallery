@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
 import { User } from '../models/user.model';
+import { LoginResponse } from '../models/graphqlresponse.model';
 
 // This service provides methods related to authentication
 @Injectable({
@@ -47,18 +48,25 @@ export class AuthService {
     * @param password User's password
     * @returns Observable of the HTTP response
     */
-  login(email: String, password: String): Observable<any> {
-    const query = `
-      mutation {
-        accountCreateEmailSession(email:"${email}", password: "${password}") {
-          _id
-          userId
-          provider
-          expire
-        }
-    `;
+  login(email: String, password: String): Observable<LoginResponse> {
+    // const query = `
+      // mutation {
+      //   accountCreateEmailSession(email:"${email}", password: "${password}") {
+      //     _id
+      //     userId
+      //     provider
+      //     expire
+      //   }
+    // `;
+    const query = {
+      "query": "mutation CreateSession($email: String!, $password: String!){ accountCreateEmailSession(email: $email, password: $password) { _id userId provider expire } }",
+      "variables": {
+        "email": email,
+        "password": password
+      }
+    }
 
-    return this.http.post(this.apiUrl, { query }, { headers: this.headers });
+    return this.http.post<LoginResponse>(this.apiUrl, query, { headers: this.headers });
   }
 
   /**
