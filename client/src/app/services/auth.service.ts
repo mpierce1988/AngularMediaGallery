@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, catchError, map, of } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, map, of } from 'rxjs';
 import { User } from '../models/user.model';
 import { LoginResponse, RegisterResponse } from '../models/graphqlresponse.model';
 import { Client, Account, ID } from 'appwrite';
@@ -17,6 +17,10 @@ export class AuthService {
   private headers = new HttpHeaders()
     .set('Content-Type', 'application/json')
     .set('X-Appwrite-Project', '64c588b8b4f092464391');
+
+  // Show loggedIn status using BehaviourSubject
+  private loggedIn = new BehaviorSubject<boolean>(false);
+  loggedIn$ = this.loggedIn.asObservable();
 
   // Inject HttpClient into the service
   constructor(private http: HttpClient) { }
@@ -87,12 +91,14 @@ export class AuthService {
 
     return new Observable<LoginResponse>((observer) => {
       account.createEmailSession(email, password).then((response) => {
+        this.loggedIn.next(true);
         observer.next({
           data: {
             accountCreateEmailSession: response
           }
         });
       }).catch((error) => {
+        this.loggedIn.next(false);
         observer.next({          
           errors: [{
             message: error.message,
@@ -151,31 +157,7 @@ export class AuthService {
    * @returns Observable of a boolean representing if the User is logged in
    */
   isLoggedIn(): Observable<boolean> {
-    // Create graphql query to getSession
-    // const query = `
-    //   query GetUser {
-    //     accountGet {
-    //       _id
-    //       email
-    //     }
-    //   } `;
-
-    // const query = {
-    //   "query": "query GetUser { accountGet { _id email } }"
-    // }
-
-    // return this.http.post(this.apiUrl, query, { headers: this.headers, withCredentials: true })
-    //   .pipe(
-    //     map((res: any) => {
-    //       if(!res || !res.data || !res.data.email) {
-    //         return false;
-    //       }
-
-    //       // User was returned, so they are logged in
-    //       return true;
-    //     })
-    //   );
-
+    
     const client = new Client();
     const account = new Account(client);
 
@@ -184,6 +166,26 @@ export class AuthService {
     return new Observable<boolean>((observer) => {
       account.get().then((response) => {
         console.log(response);
+        this.loggedIn.next(true);
+        observer.next(true);        
+      }).catch((error) => {
+        console.log(error);
+        this.loggedIn.next(false);
+        observer.next(false);
+      });
+    });
+  }
+
+  logout(): Observable<boolean> {
+
+    const client = new Client();
+    const account = new Account(client);
+
+    client.setEndpoint('http://localhost:8080/v1').setProject('64c588b8b4f092464391');
+
+    return new Observable<boolean>((observer) => {
+      account.deleteSession('current').then((response) => {
+        this.loggedIn.next(false);
         observer.next(true);        
       }).catch((error) => {
         observer.next(false);
